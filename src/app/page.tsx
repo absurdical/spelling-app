@@ -1,103 +1,237 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect } from 'react'
+import confetti from 'canvas-confetti'
+import words from '../data/words.json'
+
+// Types
+type WordItem = {
+  word: string
+  image: string
+  difficulty: 'easy' | 'medium' | 'hard'
+  category: string
+}
+
+function shuffle<T>(array: T[]): T[] {
+  const result = [...array]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
+// BackButton component
+const BackButton = ({ onClick }: { onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="mt-4 px-4 py-2 bg-blue-200 text-blue-800 rounded hover:bg-blue-300"
+  >
+    🔙 Back
+  </button>
+)
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | null>(null)
+  const [category, setCategory] = useState<string | null>(null)
+  const [gameWords, setGameWords] = useState<WordItem[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [selectedLetters, setSelectedLetters] = useState<(string | null)[]>([])
+  const [scrambledLetters, setScrambledLetters] = useState<string[]>([])
+  const [usedIndices, setUsedIndices] = useState<number[]>([])
+  const [status, setStatus] = useState<'idle' | 'correct' | 'wrong'>('idle')
+
+  const categories = Array.from(new Set(words.map(w => w.category)))
+
+  // When difficulty & category are chosen → filter & shuffle words
+  useEffect(() => {
+    if (difficulty && category) {
+      const filtered = words.filter(
+        w => w.difficulty === difficulty && w.category === category
+      )
+      const shuffled = shuffle(filtered)
+      setGameWords(shuffled)
+      setCurrentIndex(0)
+    }
+  }, [difficulty, category])
+
+  const currentWord = gameWords[currentIndex]
+
+  // When currentWord changes → setup game state
+  useEffect(() => {
+    if (!currentWord) return
+    const shuffledLetters = shuffle([...currentWord.word.split('')])
+    setScrambledLetters(shuffledLetters)
+    setSelectedLetters(Array(currentWord.word.length).fill(null))
+    setUsedIndices([])
+    setStatus('idle')
+  }, [currentWord])
+
+  const handleLetterClick = (letter: string, idx: number) => {
+    const nextSlot = selectedLetters.findIndex((slot) => slot === null)
+    if (nextSlot === -1) return
+    const updatedSlots = [...selectedLetters]
+    updatedSlots[nextSlot] = letter
+    setSelectedLetters(updatedSlots)
+    setUsedIndices([...usedIndices, idx])
+  }
+
+  const handleSlotClick = (slotIdx: number) => {
+    const updatedSlots = [...selectedLetters]
+    const removedLetter = updatedSlots[slotIdx]
+    if (!removedLetter) return
+    updatedSlots[slotIdx] = null
+
+    const idxToRemove = usedIndices.find(idx => scrambledLetters[idx] === removedLetter)
+    setUsedIndices(usedIndices.filter(idx => idx !== idxToRemove))
+    setSelectedLetters(updatedSlots)
+  }
+
+  const handleCheck = () => {
+    const attempt = selectedLetters.join('')
+    if (attempt.toLowerCase() === currentWord.word) {
+      setStatus('correct')
+      confetti()
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % gameWords.length)
+      }, 1500)
+    } else {
+      setStatus('wrong')
+      setTimeout(() => setStatus('idle'), 1000)
+    }
+  }
+
+  const allSlotsFilled = selectedLetters.every((s) => s !== null)
+
+  if (!difficulty) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 p-4">
+        <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col gap-4">
+          <h1 className="text-3xl font-bold text-blue-700 text-center">Choose Difficulty</h1>
+          <div className="flex gap-4 justify-center">
+            {['easy', 'medium', 'hard'].map((level) => (
+              <button
+                key={level}
+                onClick={() => setDifficulty(level as any)}
+                className="px-4 py-2 rounded bg-blue-300 text-white font-bold hover:bg-blue-400"
+              >
+                {level}
+              </button>
+            ))}
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+    )
+  }
+
+  if (!category) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 p-4">
+        <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col gap-4">
+          <h1 className="text-3xl font-bold text-blue-700 text-center">Choose Category</h1>
+          <div className="flex gap-4 justify-center flex-wrap">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className="px-4 py-2 rounded bg-blue-300 text-white font-bold hover:bg-blue-400"
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <BackButton onClick={() => setDifficulty(null)} />
+        </div>
+      </main>
+    )
+  }
+
+  if (!currentWord) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 p-4">
+        <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col gap-4 items-center">
+          <h1 className="text-3xl text-blue-700 text-center">No words available for this selection</h1>
+          <BackButton onClick={() => {
+            setDifficulty(null)
+            setCategory(null)
+          }} />
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-white to-blue-200 relative">
+      <div className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-6 border-4 border-blue-300">
+        <h1 className="text-3xl font-bold text-blue-700">
+          {difficulty?.toUpperCase()} - {category?.toUpperCase()}
+        </h1>
+
+        <img
+          src={currentWord.image}
+          alt={currentWord.word}
+          className="w-48 h-48 object-contain"
+        />
+
+        {/* Letter slots */}
+        <div className="flex gap-2 flex-wrap justify-center">
+          {selectedLetters.map((slot, idx) => (
+            <div
+              key={idx}
+              onClick={() => handleSlotClick(idx)}
+              className={`w-12 h-12 border-2 rounded-lg bg-white text-2xl text-center leading-[3rem] cursor-pointer ${
+                slot ? 'border-blue-500 text-gray-800' : 'border-gray-300 text-gray-300'
+              }`}
+            >
+              {slot || ''}
+            </div>
+          ))}
+        </div>
+
+        {/* Scrambled letters */}
+        <div className="flex gap-2 mt-4 flex-wrap justify-center">
+          {scrambledLetters.map((letter, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleLetterClick(letter, idx)}
+              disabled={usedIndices.includes(idx)}
+              className={`w-12 h-12 rounded text-xl font-bold shadow ${
+                usedIndices.includes(idx)
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-blue-300 hover:bg-blue-400 text-white'
+              }`}
+            >
+              {letter}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={handleCheck}
+          disabled={!allSlotsFilled}
+          className={`px-6 py-3 mt-4 rounded-full text-xl font-bold shadow-lg ${
+            allSlotsFilled
+              ? 'bg-blue-500 text-white hover:bg-blue-600'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+          Check
+        </button>
+
+        {status === 'correct' && (
+          <p className="text-green-600 text-lg font-semibold">🎉 Correct!</p>
+        )}
+        {status === 'wrong' && (
+          <p className="text-red-600 text-lg font-semibold">❌ Try again!</p>
+        )}
+
+        {/* Home button in game screen */}
+        <BackButton onClick={() => {
+          setDifficulty(null)
+          setCategory(null)
+        }} />
+      </div>
+    </main>
+  )
 }

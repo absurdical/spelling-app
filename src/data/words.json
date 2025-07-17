@@ -1,0 +1,26 @@
+[
+  {
+    "word": "cat",
+    "image": "/images/cat.png",
+    "difficulty": "easy",
+    "category": "animals"
+  },
+  {
+    "word": "dog",
+    "image": "/images/dog.png",
+    "difficulty": "easy",
+    "category": "animals"
+  },
+  {
+    "word": "sun",
+    "image": "/images/sun.png",
+    "difficulty": "easy",
+    "category": "nature"
+  },
+  {
+    "word": "hat",
+    "image": "/images/hat.png",
+    "difficulty": "easy",
+    "category": "object"
+  }
+]
