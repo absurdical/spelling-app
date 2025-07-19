@@ -1,7 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '../context/AuthContext'
+import { signOut } from 'firebase/auth'
+import { auth, db } from '../lib/firebase'
 import confetti from 'canvas-confetti'
+import { Timestamp, doc, setDoc } from 'firebase/firestore'
 import words from '../data/words.json'
 
 // Types
@@ -21,7 +26,6 @@ function shuffle<T>(array: T[]): T[] {
   return result
 }
 
-// BackButton component
 const BackButton = ({ onClick }: { onClick: () => void }) => (
   <button
     onClick={onClick}
@@ -32,6 +36,9 @@ const BackButton = ({ onClick }: { onClick: () => void }) => (
 )
 
 export default function Home() {
+  const { user } = useAuth()
+  const router = useRouter()
+
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | null>(null)
   const [category, setCategory] = useState<string | null>(null)
   const [gameWords, setGameWords] = useState<WordItem[]>([])
@@ -44,7 +51,11 @@ export default function Home() {
 
   const categories = Array.from(new Set(words.map(w => w.category)))
 
-  // When difficulty & category are chosen → filter & shuffle words
+  const handleLogout = () => {
+    signOut(auth)
+  }
+
+  // when difficulty & category chosen → filter & shuffle words
   useEffect(() => {
     if (difficulty && category) {
       const filtered = words.filter(
@@ -58,7 +69,7 @@ export default function Home() {
 
   const currentWord = gameWords[currentIndex]
 
-  // When currentWord changes → setup game state
+  // when currentWord changes → reset game state
   useEffect(() => {
     if (!currentWord) return
     const shuffledLetters = shuffle([...currentWord.word.split('')])
@@ -69,7 +80,7 @@ export default function Home() {
   }, [currentWord])
 
   const handleLetterClick = (letter: string, idx: number) => {
-    const nextSlot = selectedLetters.findIndex((slot) => slot === null)
+    const nextSlot = selectedLetters.findIndex(slot => slot === null)
     if (nextSlot === -1) return
     const updatedSlots = [...selectedLetters]
     updatedSlots[nextSlot] = letter
@@ -93,8 +104,19 @@ export default function Home() {
     if (attempt.toLowerCase() === currentWord.word) {
       setStatus('correct')
       confetti()
+
+      // ✅ Write to Firestore
+      if (user) {
+        const scrapbookRef = doc(db, `users/${user.uid}/scrapbook/${currentWord.word}`)
+        setDoc(scrapbookRef, {
+          word: currentWord.word,
+          image: currentWord.image,
+          completedAt: Timestamp.now(), // ✅ FIXED!
+        })
+      }
+
       setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % gameWords.length)
+        setCurrentIndex(prev => (prev + 1) % gameWords.length)
       }, 1500)
     } else {
       setStatus('wrong')
@@ -102,15 +124,43 @@ export default function Home() {
     }
   }
 
-  const allSlotsFilled = selectedLetters.every((s) => s !== null)
+  const allSlotsFilled = selectedLetters.every(s => s !== null)
 
-  if (!difficulty) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 p-4">
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-white to-blue-200 relative">
+      {/* Login/Logout/Scrapbook */}
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        {user ? (
+          <>
+            <button
+              onClick={() => router.push('/scrapbook')}
+              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+            >
+              📒 Scrapbook
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => router.push('/login')}
+            className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+          >
+            Login
+          </button>
+        )}
+      </div>
+
+      {/* Game area */}
+      {!difficulty ? (
         <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col gap-4">
           <h1 className="text-3xl font-bold text-blue-700 text-center">Choose Difficulty</h1>
           <div className="flex gap-4 justify-center">
-            {['easy', 'medium', 'hard'].map((level) => (
+            {['easy', 'medium', 'hard'].map(level => (
               <button
                 key={level}
                 onClick={() => setDifficulty(level as any)}
@@ -121,17 +171,11 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </main>
-    )
-  }
-
-  if (!category) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 p-4">
+      ) : !category ? (
         <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col gap-4">
           <h1 className="text-3xl font-bold text-blue-700 text-center">Choose Category</h1>
           <div className="flex gap-4 justify-center flex-wrap">
-            {categories.map((cat) => (
+            {categories.map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
@@ -143,95 +187,88 @@ export default function Home() {
           </div>
           <BackButton onClick={() => setDifficulty(null)} />
         </div>
-      </main>
-    )
-  }
-
-  if (!currentWord) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-200 p-4">
+      ) : !currentWord ? (
         <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col gap-4 items-center">
           <h1 className="text-3xl text-blue-700 text-center">No words available for this selection</h1>
-          <BackButton onClick={() => {
-            setDifficulty(null)
-            setCategory(null)
-          }} />
+          <BackButton
+            onClick={() => {
+              setDifficulty(null)
+              setCategory(null)
+            }}
+          />
         </div>
-      </main>
-    )
-  }
+      ) : (
+        <div className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-6 border-4 border-blue-300">
+          <h1 className="text-3xl font-bold text-blue-700">
+            {difficulty?.toUpperCase()} - {category?.toUpperCase()}
+          </h1>
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-white to-blue-200 relative">
-      <div className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-6 flex flex-col items-center gap-6 border-4 border-blue-300">
-        <h1 className="text-3xl font-bold text-blue-700">
-          {difficulty?.toUpperCase()} - {category?.toUpperCase()}
-        </h1>
+          <img
+            src={currentWord.image}
+            alt={currentWord.word}
+            className="w-48 h-48 object-contain"
+          />
 
-        <img
-          src={currentWord.image}
-          alt={currentWord.word}
-          className="w-48 h-48 object-contain"
-        />
+          {/* Letter slots */}
+          <div className="flex gap-2 flex-wrap justify-center">
+            {selectedLetters.map((slot, idx) => (
+              <div
+                key={idx}
+                onClick={() => handleSlotClick(idx)}
+                className={`w-12 h-12 border-2 rounded-lg bg-white text-2xl text-center leading-[3rem] cursor-pointer ${
+                  slot ? 'border-blue-500 text-gray-800' : 'border-gray-300 text-gray-300'
+                }`}
+              >
+                {slot || ''}
+              </div>
+            ))}
+          </div>
 
-        {/* Letter slots */}
-        <div className="flex gap-2 flex-wrap justify-center">
-          {selectedLetters.map((slot, idx) => (
-            <div
-              key={idx}
-              onClick={() => handleSlotClick(idx)}
-              className={`w-12 h-12 border-2 rounded-lg bg-white text-2xl text-center leading-[3rem] cursor-pointer ${
-                slot ? 'border-blue-500 text-gray-800' : 'border-gray-300 text-gray-300'
-              }`}
-            >
-              {slot || ''}
-            </div>
-          ))}
+          {/* Scrambled letters */}
+          <div className="flex gap-2 mt-4 flex-wrap justify-center">
+            {scrambledLetters.map((letter, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleLetterClick(letter, idx)}
+                disabled={usedIndices.includes(idx)}
+                className={`w-12 h-12 rounded text-xl font-bold shadow ${
+                  usedIndices.includes(idx)
+                    ? 'bg-gray-300 cursor-not-allowed'
+                    : 'bg-blue-300 hover:bg-blue-400 text-white'
+                }`}
+              >
+                {letter}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleCheck}
+            disabled={!allSlotsFilled}
+            className={`px-6 py-3 mt-4 rounded-full text-xl font-bold shadow-lg ${
+              allSlotsFilled
+                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            Check
+          </button>
+
+          {status === 'correct' && (
+            <p className="text-green-600 text-lg font-semibold">🎉 Correct!</p>
+          )}
+          {status === 'wrong' && (
+            <p className="text-red-600 text-lg font-semibold">❌ Try again!</p>
+          )}
+
+          <BackButton
+            onClick={() => {
+              setDifficulty(null)
+              setCategory(null)
+            }}
+          />
         </div>
-
-        {/* Scrambled letters */}
-        <div className="flex gap-2 mt-4 flex-wrap justify-center">
-          {scrambledLetters.map((letter, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleLetterClick(letter, idx)}
-              disabled={usedIndices.includes(idx)}
-              className={`w-12 h-12 rounded text-xl font-bold shadow ${
-                usedIndices.includes(idx)
-                  ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-blue-300 hover:bg-blue-400 text-white'
-              }`}
-            >
-              {letter}
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={handleCheck}
-          disabled={!allSlotsFilled}
-          className={`px-6 py-3 mt-4 rounded-full text-xl font-bold shadow-lg ${
-            allSlotsFilled
-              ? 'bg-blue-500 text-white hover:bg-blue-600'
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          Check
-        </button>
-
-        {status === 'correct' && (
-          <p className="text-green-600 text-lg font-semibold">🎉 Correct!</p>
-        )}
-        {status === 'wrong' && (
-          <p className="text-red-600 text-lg font-semibold">❌ Try again!</p>
-        )}
-
-        {/* Home button in game screen */}
-        <BackButton onClick={() => {
-          setDifficulty(null)
-          setCategory(null)
-        }} />
-      </div>
+      )}
     </main>
   )
 }

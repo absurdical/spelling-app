@@ -1,12 +1,15 @@
 import './globals.css'
-import { Comic_Neue } from 'next/font/google'
 import type { Metadata } from 'next'
+import { AuthProvider } from '../context/AuthContext'
+
+// optional: keep Comic Neue or use default sans
+import { Comic_Neue } from 'next/font/google'
 
 const comic = Comic_Neue({ weight: ['400', '700'], subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Spelling App',
-  description: 'A spelling game for kids',
+  description: 'Fun spelling game with scrapbook & leaderboard for kids',
 }
 
 export default function RootLayout({
@@ -16,7 +19,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={comic.className}>{children}</body>
+      <body className={comic.className}>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }
+
