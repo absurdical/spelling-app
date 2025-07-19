@@ -130,30 +130,37 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-white to-blue-200 relative">
       {/* Login/Logout/Scrapbook */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
-        {user ? (
-          <>
-            <button
-              onClick={() => router.push('/scrapbook')}
-              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
-            >
-              📒 Scrapbook
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
-            >
-              Logout
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => router.push('/login')}
-            className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
-          >
-            Login
-          </button>
-        )}
-      </div>
+  {user ? (
+    <>
+      <button
+        onClick={() => router.push('/leaderboard')}
+        className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+      >
+        🏆 Leaderboard
+      </button>
+      <button
+        onClick={() => router.push('/scrapbook')}
+        className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+      >
+        📒 Scrapbook
+      </button>
+      <button
+        onClick={handleLogout}
+        className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+      >
+        Logout
+      </button>
+    </>
+  ) : (
+    <button
+      onClick={() => router.push('/login')}
+      className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+    >
+      Login
+    </button>
+  )}
+</div>
+
 
       {/* Game area */}
       {!difficulty ? (

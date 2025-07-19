@@ -1,14 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { auth } from '../../lib/firebase'
+import { auth, db } from '../../lib/firebase'
 import { useRouter } from 'next/navigation'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
+import { setDoc, doc, Timestamp } from 'firebase/firestore'
 import { useAuth } from '../../context/AuthContext'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('') // 🆕 added
   const [isNewUser, setIsNewUser] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,7 +18,7 @@ export default function LoginPage() {
   const { user } = useAuth()
   const router = useRouter()
 
-  // 🔷 Redirect after login
+  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       router.push('/')
@@ -27,15 +29,30 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+
     try {
       if (isNewUser) {
-        await createUserWithEmailAndPassword(auth, email, password)
+        // Create auth user
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+        const uid = userCredential.user.uid
+
+        // Save profile to Firestore
+        await setDoc(doc(db, 'users', uid), {
+          name,
+          email,
+          wordsSolved: 0,
+          avatar: null, // you can set this later
+          createdAt: Timestamp.now()
+        })
+
+        router.push('/choose-avatar')
+        return
       } else {
         await signInWithEmailAndPassword(auth, email, password)
       }
-      // no need for router.push() here — handled by useEffect
+      // Navigation handled by useEffect
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || 'Something went wrong.')
     } finally {
       setLoading(false)
     }
@@ -49,6 +66,17 @@ export default function LoginPage() {
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {isNewUser && (
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name"
+              required
+              className="px-4 py-2 border rounded text-lg text-gray-800"
+            />
+          )}
+
           <input
             type="email"
             value={email}
@@ -57,6 +85,7 @@ export default function LoginPage() {
             required
             className="px-4 py-2 border rounded text-lg text-gray-800"
           />
+
           <input
             type="password"
             value={password}
@@ -65,6 +94,7 @@ export default function LoginPage() {
             required
             className="px-4 py-2 border rounded text-lg text-gray-800"
           />
+
           <button
             type="submit"
             disabled={loading}
