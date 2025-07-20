@@ -22,5 +22,17 @@
     "image": "/images/hat.png",
     "difficulty": "easy",
     "category": "object"
+  },
+  {
+    "word": "fish",
+    "image": "/images/fish.png",
+    "difficulty": "medium",
+    "category": "animals"
+  },
+  {
+    "word": "ball",
+    "image": "/images/ball.png",
+    "difficulty": "medium",
+    "category": "object"
   }
 ]
