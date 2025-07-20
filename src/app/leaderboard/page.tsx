@@ -45,11 +45,16 @@ export default function LeaderboardPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-200 p-6">
-      <div className="max-w-md mx-auto bg-white rounded-3xl shadow-xl p-6">
-        <div className="flex justify-center mb-4">
-          <span className="text-4xl">🏆</span>
+      <div className="max-w-md mx-auto bg-white rounded-3xl shadow-xl p-6 relative">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold text-blue-700">🏆 Leaderboard</h1>
+          <button
+            onClick={() => router.push('/')}
+            className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+          >
+            🏠 Home
+          </button>
         </div>
-        <h1 className="text-3xl font-bold text-blue-700 text-center">Leaderboard</h1>
 
         <div className="mt-6 space-y-4">
           {users.map((u, idx) => (
@@ -66,14 +71,19 @@ export default function LeaderboardPage() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className="font-bold text-lg">{idx + 1}</span>
-                <img
-                  src={u.avatar || '/avatars/default.png'}
-                  alt={u.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <span className="font-semibold text-blue-800">{u.name}</span>
-              </div>
+  <span className="font-bold text-lg">{idx + 1}</span>
+  <img
+    src={u.avatar || '/avatars/default.png'}
+    alt={u.name}
+    className="w-12 h-12 rounded-full object-cover"
+  />
+  <button
+    onClick={() => router.push(`/scrapbook/${u.uid}`)}
+    className="font-semibold text-blue-800 hover:underline"
+  >
+    {u.name}
+  </button>
+</div>
               <span className="text-blue-700">{u.wordsSolved} words</span>
             </div>
           ))}

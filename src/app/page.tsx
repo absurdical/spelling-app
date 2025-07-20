@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import { signOut } from 'firebase/auth'
 import { auth, db } from '../lib/firebase'
 import confetti from 'canvas-confetti'
-import { Timestamp, doc, setDoc } from 'firebase/firestore'
+import { Timestamp, doc, setDoc, updateDoc, increment } from 'firebase/firestore'
 import words from '../data/words.json'
 
 // Types
@@ -99,7 +99,7 @@ export default function Home() {
     setSelectedLetters(updatedSlots)
   }
 
-  const handleCheck = () => {
+  const handleCheck = async () => {
     const attempt = selectedLetters.join('')
     if (attempt.toLowerCase() === currentWord.word) {
       setStatus('correct')
@@ -113,7 +113,12 @@ export default function Home() {
           image: currentWord.image,
           completedAt: Timestamp.now(), // ✅ FIXED!
         })
-      }
+      
+      const userRef = doc(db, 'users', user.uid)
+      await updateDoc(userRef, {
+        wordsSolved: increment(1)
+      })
+  }
 
       setTimeout(() => {
         setCurrentIndex(prev => (prev + 1) % gameWords.length)

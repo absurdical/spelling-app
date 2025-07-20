@@ -11,8 +11,11 @@ import {
   deleteDoc,
   doc,
 } from 'firebase/firestore'
-import { auth } from '../../lib/firebase'
-import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth'
+import {
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+} from 'firebase/auth'
 import { useAuth } from '../../context/AuthContext'
 import { useRouter } from 'next/navigation'
 
@@ -83,27 +86,32 @@ export default function ScrapbookPage() {
       setTimeout(() => {
         router.push('/login')
       }, 2000)
+
     } catch (err: any) {
       console.error(err)
       if (err.code === 'auth/requires-recent-login') {
         const password = prompt(
           'Please re-enter your password to confirm account deletion:'
         )
-        if (password) {
-          try {
-            const credential = EmailAuthProvider.credential(user.email!, password)
-            await reauthenticateWithCredential(user, credential)
-            await deleteUser(user)
-            setSuccess(true)
-            setTimeout(() => {
-              router.push('/login')
-            }, 2000)
-          } catch (reauthErr: any) {
-            console.error(reauthErr)
-            setError(reauthErr.message || 'Reauthentication failed.')
-          }
-        } else {
+        if (!password) {
           setError('Account deletion canceled: password required.')
+          setDeleting(false)
+          return
+        }
+
+        try {
+          const credential = EmailAuthProvider.credential(user.email!, password)
+          await reauthenticateWithCredential(user, credential)
+          await deleteUser(user)
+
+          setSuccess(true)
+          setTimeout(() => {
+            router.push('/login')
+          }, 2000)
+
+        } catch (reauthErr: any) {
+          console.error(reauthErr)
+          setError(reauthErr.message || 'Reauthentication failed.')
         }
       } else {
         setError(err.message || 'Failed to delete account.')
