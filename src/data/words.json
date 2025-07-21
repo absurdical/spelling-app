@@ -34,5 +34,53 @@
     "image": "/images/ball.png",
     "difficulty": "medium",
     "category": "object"
+  },
+  {
+    "word": "baby",
+    "image": "/images/baby.png",
+    "difficulty": "medium",
+    "category": "people"
+  },
+  {
+    "word": "bike",
+    "image": "/images/bike.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "book",
+    "image": "/images/book.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "car",
+    "image": "/images/car.png",
+    "difficulty": "easy",
+    "category": "object"
+  },
+  {
+    "word": "cow",
+    "image": "/images/cow.png",
+    "difficulty": "easy",
+    "category": "animals"
+  },
+  {
+    "word": "pig",
+    "image": "/images/pig.png",
+    "difficulty": "easy",
+    "category": "animals"
+  },
+  {
+    "word": "tree",
+    "image": "/images/tree.png",
+    "difficulty": "medium",
+    "category": "nature"
+  },
+  {
+    "word": "apple",
+    "image": "/images/apple.png",
+    "difficulty": "medium",
+    "category": "nature"
   }
 ]
