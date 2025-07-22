@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('') // 🆕 added
+  const [name, setName] = useState('')
   const [isNewUser, setIsNewUser] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,7 +18,6 @@ export default function LoginPage() {
   const { user } = useAuth()
   const router = useRouter()
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       router.push('/')
@@ -32,17 +31,15 @@ export default function LoginPage() {
 
     try {
       if (isNewUser) {
-        // Create auth user
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const uid = userCredential.user.uid
 
-        // Save profile to Firestore
         await setDoc(doc(db, 'users', uid), {
           name,
           email,
           wordsSolved: 0,
-          avatar: null, // you can set this later
-          createdAt: Timestamp.now()
+          avatar: null,
+          createdAt: Timestamp.now(),
         })
 
         router.push('/choose-avatar')
@@ -50,9 +47,12 @@ export default function LoginPage() {
       } else {
         await signInWithEmailAndPassword(auth, email, password)
       }
-      // Navigation handled by useEffect
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong.')
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('Something went wrong.')
+      }
     } finally {
       setLoading(false)
     }
