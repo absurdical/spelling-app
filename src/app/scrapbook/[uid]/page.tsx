@@ -7,18 +7,20 @@ import {
   getDocs,
   query,
   orderBy,
-  limit
+  limit,
+  Timestamp,
 } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 type ScrapbookItem = {
   word: string
   image: string
-  completedAt: any
+  completedAt: Timestamp
 }
 
 export default function FriendScrapbookPage(props: { params: Promise<{ uid: string }> }) {
-  const { uid } = use(props.params)  // 🔷 unwrap the Promise
+  const { uid } = use(props.params) // if props.params is a Promise
 
   const router = useRouter()
   const [items, setItems] = useState<ScrapbookItem[]>([])
@@ -30,7 +32,9 @@ export default function FriendScrapbookPage(props: { params: Promise<{ uid: stri
         const colRef = collection(db, `users/${uid}/scrapbook`)
         const q = query(colRef, orderBy('completedAt', 'desc'), limit(9))
         const snapshot = await getDocs(q)
-        const data: ScrapbookItem[] = snapshot.docs.map(doc => doc.data() as ScrapbookItem)
+        const data: ScrapbookItem[] = snapshot.docs.map(
+          doc => doc.data() as ScrapbookItem
+        )
         setItems(data)
       } catch (err) {
         console.error(err)
@@ -73,11 +77,12 @@ export default function FriendScrapbookPage(props: { params: Promise<{ uid: stri
                 key={item.word}
                 className="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center border-2 border-blue-200"
               >
-                <img
+                <Image
                   src={item.image}
                   alt={item.word}
-                  loading="lazy"
-                  className="w-24 h-24 object-contain mb-2"
+                  width={96}
+                  height={96}
+                  className="object-contain mb-2"
                 />
                 <p className="text-lg font-bold text-blue-700">{item.word}</p>
               </div>

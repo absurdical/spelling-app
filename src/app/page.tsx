@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useAuth } from '../context/AuthContext'
 import { signOut } from 'firebase/auth'
 import { auth, db } from '../lib/firebase'
@@ -55,7 +56,6 @@ export default function Home() {
     signOut(auth)
   }
 
-  // when difficulty & category chosen → filter & shuffle words
   useEffect(() => {
     if (difficulty && category) {
       const filtered = words.filter(
@@ -69,7 +69,6 @@ export default function Home() {
 
   const currentWord = gameWords[currentIndex]
 
-  // when currentWord changes → reset game state
   useEffect(() => {
     if (!currentWord) return
     const shuffledLetters = shuffle([...currentWord.word.split('')])
@@ -94,31 +93,37 @@ export default function Home() {
     if (!removedLetter) return
     updatedSlots[slotIdx] = null
 
-    const idxToRemove = usedIndices.find(idx => scrambledLetters[idx] === removedLetter)
-    setUsedIndices(usedIndices.filter(idx => idx !== idxToRemove))
+    const idxToRemove = usedIndices.find(
+      idx => scrambledLetters[idx] === removedLetter && !updatedSlots.includes(removedLetter)
+    )
+    if (idxToRemove !== undefined) {
+      setUsedIndices(usedIndices.filter(idx => idx !== idxToRemove))
+    }
     setSelectedLetters(updatedSlots)
   }
 
   const handleCheck = async () => {
+    if (!currentWord) return
+
     const attempt = selectedLetters.join('')
     if (attempt.toLowerCase() === currentWord.word) {
       setStatus('correct')
       confetti()
 
-      // ✅ Write to Firestore
       if (user) {
         const scrapbookRef = doc(db, `users/${user.uid}/scrapbook/${currentWord.word}`)
-        setDoc(scrapbookRef, {
+        const userRef = doc(db, 'users', user.uid)
+
+        await setDoc(scrapbookRef, {
           word: currentWord.word,
           image: currentWord.image,
-          completedAt: Timestamp.now(), // ✅ FIXED!
+          completedAt: Timestamp.now(),
         })
-      
-      const userRef = doc(db, 'users', user.uid)
-      await updateDoc(userRef, {
-        wordsSolved: increment(1)
-      })
-  }
+
+        await updateDoc(userRef, {
+          wordsSolved: increment(1),
+        })
+      }
 
       setTimeout(() => {
         setCurrentIndex(prev => (prev + 1) % gameWords.length)
@@ -135,47 +140,46 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-white to-blue-200 relative">
       {/* Login/Logout/Scrapbook */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
-  {user ? (
-    <>
-      <button
-        onClick={() => router.push('/leaderboard')}
-        className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
-      >
-        🏆 Leaderboard
-      </button>
-      <button
-        onClick={() => router.push('/scrapbook')}
-        className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
-      >
-        📒 Scrapbook
-      </button>
-      <button
-        onClick={handleLogout}
-        className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
-      >
-        Logout
-      </button>
-    </>
-  ) : (
-    <button
-      onClick={() => router.push('/login')}
-      className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
-    >
-      Login
-    </button>
-  )}
-</div>
-
+        {user ? (
+          <>
+            <button
+              onClick={() => router.push('/leaderboard')}
+              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+            >
+              🏆 Leaderboard
+            </button>
+            <button
+              onClick={() => router.push('/scrapbook')}
+              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+            >
+              📒 Scrapbook
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => router.push('/login')}
+            className="px-3 py-1 bg-blue-200 text-blue-800 rounded hover:bg-blue-300 text-sm"
+          >
+            Login
+          </button>
+        )}
+      </div>
 
       {/* Game area */}
       {!difficulty ? (
         <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col gap-4">
           <h1 className="text-3xl font-bold text-blue-700 text-center">Choose Difficulty</h1>
           <div className="flex gap-4 justify-center">
-            {['easy', 'medium', 'hard'].map(level => (
+            {(['easy', 'medium', 'hard'] as const).map(level => (
               <button
                 key={level}
-                onClick={() => setDifficulty(level as any)}
+                onClick={() => setDifficulty(level)}
                 className="px-4 py-2 rounded bg-blue-300 text-white font-bold hover:bg-blue-400"
               >
                 {level}
@@ -215,10 +219,12 @@ export default function Home() {
             {difficulty?.toUpperCase()} - {category?.toUpperCase()}
           </h1>
 
-          <img
+          <Image
             src={currentWord.image}
             alt={currentWord.word}
-            className="w-48 h-48 object-contain"
+            width={192}
+            height={192}
+            className="object-contain"
           />
 
           {/* Letter slots */}
