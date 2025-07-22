@@ -58,9 +58,14 @@ export default function Home() {
 
   useEffect(() => {
     if (difficulty && category) {
-      const filtered = words.filter(
-        w => w.difficulty === difficulty && w.category === category
-      )
+      const filtered: WordItem[] = words
+        .filter(w => w.difficulty === difficulty && w.category === category)
+        .map(w => ({
+          word: w.word,
+          image: w.image,
+          difficulty: w.difficulty as 'easy' | 'medium' | 'hard',
+          category: w.category,
+        }))
       const shuffled = shuffle(filtered)
       setGameWords(shuffled)
       setCurrentIndex(0)
@@ -138,7 +143,6 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-blue-100 via-white to-blue-200 relative">
-      {/* Login/Logout/Scrapbook */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
         {user ? (
           <>
@@ -171,7 +175,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* Game area */}
       {!difficulty ? (
         <div className="bg-white p-6 rounded-3xl shadow-xl flex flex-col gap-4">
           <h1 className="text-3xl font-bold text-blue-700 text-center">Choose Difficulty</h1>
@@ -227,7 +230,6 @@ export default function Home() {
             className="object-contain"
           />
 
-          {/* Letter slots */}
           <div className="flex gap-2 flex-wrap justify-center">
             {selectedLetters.map((slot, idx) => (
               <div
@@ -242,7 +244,6 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Scrambled letters */}
           <div className="flex gap-2 mt-4 flex-wrap justify-center">
             {scrambledLetters.map((letter, idx) => (
               <button
