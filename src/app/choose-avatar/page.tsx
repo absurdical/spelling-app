@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { doc, updateDoc } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 import avatars from '../../data/avatars.json'
+import Image from 'next/image'
 
 export default function ChooseAvatarPage() {
   const { user } = useAuth()
@@ -22,13 +23,12 @@ export default function ChooseAvatarPage() {
     setLoading(true)
     setError('')
     try {
-      await updateDoc(doc(db, 'users', user.uid), {
-        avatar
-      })
+      await updateDoc(doc(db, 'users', user.uid), { avatar })
       router.push('/')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      setError(err.message || 'Failed to save avatar')
+      setError('Failed to save avatar')
+    } finally {
       setLoading(false)
     }
   }
@@ -46,10 +46,13 @@ export default function ChooseAvatarPage() {
               disabled={loading}
               className="p-2 rounded hover:ring-4 hover:ring-blue-300"
             >
-              <img
+              <Image
                 src={avatar}
                 alt="Avatar"
+                width={96}
+                height={96}
                 className="w-24 h-24 object-contain mx-auto"
+                unoptimized
               />
             </button>
           ))}

@@ -5,6 +5,7 @@ import { db } from '../../lib/firebase'
 import { collection, getDocs, query, orderBy } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../context/AuthContext'
+import Image from 'next/image'
 
 type User = {
   name: string
@@ -71,19 +72,22 @@ export default function LeaderboardPage() {
               }`}
             >
               <div className="flex items-center gap-3">
-  <span className="font-bold text-lg">{idx + 1}</span>
-  <img
-    src={u.avatar || '/avatars/default.png'}
-    alt={u.name}
-    className="w-12 h-12 rounded-full object-cover"
-  />
-  <button
-    onClick={() => router.push(`/scrapbook/${u.uid}`)}
-    className="font-semibold text-blue-800 hover:underline"
-  >
-    {u.name}
-  </button>
-</div>
+                <span className="font-bold text-lg">{idx + 1}</span>
+                <Image
+                  src={u.avatar || '/avatars/default.png'}
+                  alt={u.name}
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 rounded-full object-cover"
+                  unoptimized
+                />
+                <button
+                  onClick={() => router.push(`/scrapbook/${u.uid}`)}
+                  className="font-semibold text-blue-800 hover:underline"
+                >
+                  {u.name}
+                </button>
+              </div>
               <span className="text-blue-700">{u.wordsSolved} words</span>
             </div>
           ))}
