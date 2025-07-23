@@ -118,5 +118,29 @@
     "image": "/images/chair.png",
     "difficulty": "medium",
     "category": "object"
+  },
+  {
+    "word": "house",
+    "image": "/images/house.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "mouse",
+    "image": "/images/mouse.png",
+    "difficulty": "medium",
+    "category": "animals"
+  },
+  {
+    "word": "train",
+    "image": "/images/train.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "plane",
+    "image": "/images/plane.png",
+    "difficulty": "medium",
+    "category": "object"
   }
 ]
