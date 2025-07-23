@@ -81,6 +81,42 @@
     "word": "apple",
     "image": "/images/apple.png",
     "difficulty": "medium",
-    "category": "nature"
+    "category": "food"
+  },
+    {
+    "word": "pie",
+    "image": "/images/pie.png",
+    "difficulty": "easy",
+    "category": "food"
+  },
+  {
+    "word": "unicorn",
+    "image": "/images/unicorn.png",
+    "difficulty": "hard",
+    "category": "animals"
+  },
+  {
+    "word": "doll",
+    "image": "/images/doll.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "truck",
+    "image": "/images/truck.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "barn",
+    "image": "/images/barn.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "chair",
+    "image": "/images/chair.png",
+    "difficulty": "medium",
+    "category": "object"
   }
 ]
