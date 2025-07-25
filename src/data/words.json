@@ -142,5 +142,65 @@
     "image": "/images/plane.png",
     "difficulty": "medium",
     "category": "object"
+  },
+  {
+    "word": "grapes",
+    "image": "/images/grapes.png",
+    "difficulty": "hard",
+    "category": "food"
+  },
+  {
+    "word": "grill",
+    "image": "/images/grill.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "bus",
+    "image": "/images/bus.png",
+    "difficulty": "easy",
+    "category": "object"
+  },
+  {
+    "word": "bed",
+    "image": "/images/bed.png",
+    "difficulty": "easy",
+    "category": "object"
+  },
+  {
+    "word": "bear",
+    "image": "/images/bear.png",
+    "difficulty": "medium",
+    "category": "object"
+  },
+  {
+    "word": "candy",
+    "image": "/images/candy.png",
+    "difficulty": "medium",
+    "category": "food"
+  },
+  {
+    "word": "box",
+    "image": "/images/box.png",
+    "difficulty": "easy",
+    "category": "object"
+  },
+  {
+    "word": "duck",
+    "image": "/images/duck.png",
+    "difficulty": "medium",
+    "category": "animals"
+  },
+  {
+    "word": "nurse",
+    "image": "/images/nurse.png",
+    "difficulty": "medium",
+    "category": "people"
+  },
+  {
+    "word": "pony",
+    "image": "/images/pony.png",
+    "difficulty": "medium",
+    "category": "animals"
   }
 ]
